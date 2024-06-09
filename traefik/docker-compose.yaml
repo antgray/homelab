@@ -1,0 +1,72 @@
+services:
+  dockerproxy:
+    container_name: dockerproxy
+    image: wollomatic/socket-proxy:1 
+    command:
+      - --loglevel=info
+      - --allowfrom=traefik
+      - --listenip=0.0.0.0
+      - --allowGET=/v1\..{1,2}/(version|containers/.*|events.*) 
+      - --shutdowngracetime=5
+      - --watchdoginterval=600
+      - --stoponwatchdog
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 64M
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    user: 65534:996
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-proxynet
+
+  traefik:
+    container_name: traefik
+    image: traefik:3.0
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 2G
+    cpus: 0.75
+    depends_on:
+      - dockerproxy
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - $DOCKER_DIR/appconfig/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - $DOCKER_DIR/appconfig/traefik/dynamic:/etc/traefik/dynamic
+      - $DOCKER_DIR/appconfig/traefik/acme.json:/etc/traefik/acme.json
+      - $DOCKER_DIR/appconfig/traefik/basicauth.txt:/etc/traefik/basicauth.txt
+    user: 1000:1000 
+    env_file:
+      - .env
+    labels:
+      - --traefik.enable=true
+      # create router
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik.tls.domains[0].sans=*.${DOMAIN}"
+      - "traefik.http.routers.traefik.entrypoints=web-secure"
+      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik.middlewares=secHeaders@file"
+      # create basic auth middleware
+      - "traefik.http.middlewares.traefik-auth.basicauth.removeheader=true"
+      - "traefik.http.middlewares.traefik-auth.basicauth.usersfile=/etc/traefik/basicauth.txt"
+    networks:
+      - traefik
+      - docker-proxynet
+    ports:
+      - 80:10080
+      - 443:10443
+
+networks:
+  docker-proxynet:
+    driver: bridge
+    internal: true
+  traefik:
+    name: traefik 
+    external: true 

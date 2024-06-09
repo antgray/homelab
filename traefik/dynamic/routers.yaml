@@ -1,0 +1,87 @@
+http:
+  routers:
+    adguard-web:
+      rule: "Host(`adguard.$DOMAIN`)"
+      entryPoints: web-secure
+      service: adguard-web
+      middlewares:
+        - secHeaders
+        - lanAllow
+        - authentik
+      tls:
+        certResolver: cloudflare
+        domains:
+          - sans: "*.$DOMAIN"
+    pve-web:
+      rule: "Host(`pve.$DOMAIN`)"
+      entryPoints: web-secure
+      service: pve-web
+      middlewares:
+        - secHeaders
+        - lanAllow
+      tls:
+        certResolver: cloudflare
+        domains:
+          - sans: "*.$DOMAIN"
+    ops:
+      rule: "Host(`ops.$DOMAIN`)"
+      entryPoints: web-secure
+      service: ops-web
+      middlewares:
+        - secHeaders
+        - lanAllow
+      tls:
+        certResolver: cloudflare
+        domains:
+          - sans: "*.$DOMAIN"
+    ops-api:
+      rule: "Host(`ops.$DOMAIN`) && PathPrefix(`/api/core/backup/download/this`)"
+      entryPoints: web-secure
+      service: ops-web
+      middlewares:
+        - apiAllow
+      tls:
+        certResolver: cloudflare
+        domains:
+          - sans: "*.$DOMAIN"
+    authentik:
+      rule: "Host(`adguard.$DOMAIN`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      service: authentik
+    slskd:
+      rule: "Host(`slskd.$DOMAIN`)"
+      entryPoints: web-secure
+      service: slskd-web
+      middlewares:
+        - lanAllow
+        - secHeaders
+      tls:
+        certResolver: cloudflare
+        domains:
+          - sans: "*.$DOMAIN"
+
+  serversTransports:
+    pve-web:
+      insecureSkipVerify: true
+    unifi-web:
+      insecureSkipVerify: true
+
+  services:
+    adguard-web:
+      loadBalancer:
+        servers:
+          - url:
+    pve-web:
+      loadBalancer:
+        passHostHeader: true
+        serversTransport: pve-web
+        servers:
+          - url: 
+    ops-web:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: 
+    authentik:
+      loadBalancer:
+        servers:
+          - url: http://authentik-server:9000/outpost.goauthentik.io

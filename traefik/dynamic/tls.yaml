@@ -1,0 +1,5 @@
+tls:
+  options:
+    default: # set some TLS options
+    # https://doc.traefik.io/traefik/https/tls/
+      minVersion: VersionTLS12
