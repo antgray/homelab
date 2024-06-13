@@ -1,30 +1,25 @@
 http:
   middlewares:
-
     traefik-auth:
       basicAuth:
         usersfile: /etc/traefik/basicauth.txt
-
     lanAllow:
       ipAllowList:
         sourceRange:
-
+          - "192.168.0.2"
     rfc1918Allow:
       ipAllowList:
         sourceRange:
           - "10.0.0.0/8"
           - "172.16.0.0/12"
           - "192.168.0.0/16"
-
     apiAllow:
       ipAllowList:
         sourceRange:
-
     unifiHeaders:
       headers:
         customRequestHeaders:
           Authorization: ""
-
     secHeaders:
       headers: # set some security headers
         browserXssFilter: true
@@ -37,7 +32,6 @@ http:
         customResponseHeaders:    # remove unnecessary headers which expose used server software
           server: ""
           x-powered-by: ""
-
     authentik:
       forwardAuth:
         address: http://authentik-server:9000/outpost.goauthentik.io/auth/traefik
@@ -54,4 +48,3 @@ http:
           - X-authentik-meta-provider
           - X-authentik-meta-app
           - X-authentik-meta-version
-

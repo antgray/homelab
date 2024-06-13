@@ -1,0 +1,40 @@
+services:
+  unifi:
+    container_name: unifi
+    image: jacobalberty/unifi
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 2G
+    cpus: 0.75
+    volumes:
+      - $DOCKERDIR/unifi:/unifi
+    user: 999:999
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      # create router
+      - "traefik.http.routers.unifi.rule=Host(`unifi.${DOMAIN}`)"
+      - "traefik.http.routers.unifi.service=unifi"
+      - "traefik.http.routers.unifi.tls=true"
+      - "traefik.http.routers.unifi.tls.certresolver=cloudflare"
+      - "traefik.http.routers.unifi.tls.domains[0].sans=*.${DOMAIN}"
+      - "traefik.http.routers.unifi.entrypoints=web-secure"
+      - "traefik.http.routers.unifi.middlewares=unifi-chain@file"
+      - "traefik.http.services.unifi.loadbalancer.server.port=8443"
+      - "traefik.http.services.unifi.loadbalancer.server.scheme=https"
+      - "traefik.http.services.unifi.loadbalancer.serverstransport=unifi-web@file"
+
+    networks:
+      - traefik
+    ports:
+      - 3478:3478/udp
+      - 8080:8080
+      - 10001:10001/udp
+    expose: 
+      - 8443 
+
+networks:
+  traefik:
+    name: traefik 
+    external: true 

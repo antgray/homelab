@@ -1,0 +1,32 @@
+services:
+  vaultwarden:
+    container_name: vaultwarden
+    image: ghcr.io/dani-garcia/vaultwarden
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 2G
+    cpus: 0.75
+    volumes:
+      - $DOCKERDIR/vaultwarden/data:/data
+    user: 1000:1000
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      # create router
+      - "traefik.http.routers.vault.rule=Host(`vault.${DOMAIN}`)"
+      - "traefik.http.routers.vault.service=vault"
+      - "traefik.http.routers.vault.tls=true"
+      - "traefik.http.routers.vault.tls.certresolver=cloudflare"
+      - "traefik.http.routers.vault.tls.domains[0].sans=*.${DOMAIN}"
+      - "traefik.http.routers.vault.entrypoints=web-secure"
+      - "traefik.http.routers.vault.middlewares=web-chain-noauth@file"
+      - "traefik.http.services.vault.loadbalancer.server.port=80"
+      - "traefik.http.services.vault.loadbalancer.server.scheme=http"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    name: traefik
+    external: true

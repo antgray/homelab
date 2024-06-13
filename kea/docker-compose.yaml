@@ -1,0 +1,23 @@
+services:
+  dhcp4:
+    image: jonasal/kea-dhcp4:2.2-alpine
+    restart: unless-stopped
+    network_mode: host
+    command: -c /kea/config/dhcp4.json
+    volumes:
+      - $DOCKERDIR/kea/config:/kea/config
+      - $DOCKERDIR/kea/sockets:/kea/sockets
+      - $DOCKERDIR/kea/leases:/kea/leases
+      - $DOCKERDIR/kea/logs:/kea/logs
+
+  ctrl-agent:
+    image: jonasal/kea-ctrl-agent:2
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    command: -c /kea/config/ctrl-agent.json
+    volumes:
+      - $DOCKERDIR/kea/config:/kea/config
+      - $DOCKERDIR/kea/sockets:/kea/sockets
+      - $DOCKERDIR/kea/leases:/kea/leases
+      - $DOCKERDIR/kea/logs:/kea/logs

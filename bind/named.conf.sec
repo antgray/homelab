@@ -1,0 +1,55 @@
+acl localclients {
+  127.0.0.1/32;
+  10.0.0.0/8;
+  172.16.0.0/12;
+  192.168.0.0/16;
+};
+
+options {
+  listen-on { any; };
+  directory "/bind/etc";
+  recursion yes;
+  allow-query { localclients; };
+  querylog no;
+  allow-notify { none; };
+  forwarders { 1.1.1.1; 1.0.0.1; };
+  version "0.0";
+  auth-nxdomain no;
+  max-cache-size 0;
+  dnssec-validation auto;
+  catalog-zones {
+    zone "catalog.example.com" default-primaries { ; };
+  };
+};
+
+statistics-channels {
+  inet 0.0.0.0 port 8053;
+};
+
+server ::/0 { bogus yes; };
+
+zone "." {
+  type hint;
+  file "root.db";
+};
+
+zone "localhost" {
+  type primary;
+  file "localhost.db";
+  notify no;
+};
+
+zone "0.0.127.in-addr.arpa" {
+  type primary;
+  file "localhost.rev";
+  notify no;
+};
+
+zone "catalog.example.com" {
+  type secondary;
+  file "catalog.example";
+  primaries { ; };
+};
+
+
+
