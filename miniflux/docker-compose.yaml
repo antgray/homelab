@@ -1,0 +1,39 @@
+services:
+  miniflux:
+    container_name: miniflux
+    image: miniflux/miniflux:2.0.25
+    expose:
+      - 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rss.rule=Host(`rss.${DOMAIN}`)"
+      - "traefik.http.routers.rss.entrypoints=web-secure"
+      - "traefik.http.routers.rss.middlewares=rfc1918Allow@file,secHeaders@file"
+      - "traefik.http.routers.rss.tls=true"
+      - "traefik.http.routers.rss.tls.certResolver=cloudflare"
+      - "traefik.http.routers.rss.tls.domains[0].sans=*.${DOMAIN}"
+      - "traefik.http.services.rss.loadbalancer.server.port=8080"
+  db:
+    container_name: miniflux-db
+    image: postgres:15
+    env_file:
+      - .env
+    volumes:
+      - $DOCKERDIR/miniflux/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "miniflux"]
+      interval: 10s
+      start_period: 30s
+
+networks:
+  traefik:
+    name: traefik
+    external: true
+  miniflux:
+    name: miniflux
+    internal: true

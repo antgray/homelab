@@ -31,10 +31,10 @@ services:
       - 3478:3478/udp
       - 8080:8080
       - 10001:10001/udp
-    expose: 
-      - 8443 
+    expose:
+      - 8443
 
 networks:
   traefik:
-    name: traefik 
-    external: true 
+    name: traefik
+    external: true
